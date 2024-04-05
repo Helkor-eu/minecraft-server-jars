@@ -37,6 +37,12 @@ export async function downloadJar(jar: IMinecraftJar, logger: Logger = console.l
 			fs.writeFileSync(destionation + ".unfinished", "lock");
 			const file = fs.createWriteStream(destionation);
 			const request = https.get(jar.remoteUrl, (response) => {
+				if (response.statusCode !== 200) {
+					logger(`Status code ${response.statusCode} while downloading ${jar.identifier}`);
+					file.close();
+					fs.unlinkSync(destionation);
+					reject();
+				};
 				response.pipe(file);
 
 				file.on('finish', () => {
