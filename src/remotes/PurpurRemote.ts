@@ -1,5 +1,7 @@
+import { fetchTask } from "../lib/scheduled-fetch.js";
 import { IJarSource } from "../types/IJarSource.js";
 import { IMinecraftJar } from "../types/IMinecraftJar.js";
+import { asyncForeach } from "../utils/async-foreach.js";
 
 interface PurpurProject {
 	project: string;
@@ -29,22 +31,22 @@ class PurpurRemote implements IJarSource {
 	static readonly PURPUR_API_URL = "https://api.purpurmc.org/";
 
 	async getProject(projectName: string): Promise<PurpurProject> {
-		console.log(`PurpurRemote: Listing project ${projectName}`);
-		const response = await fetch(`${PurpurRemote.PURPUR_API_URL}v2/${projectName}`);
+		console.log(`PurpurRemote: Requesting project ${projectName}`);
+		const response = await fetchTask(`${PurpurRemote.PURPUR_API_URL}v2/${projectName}`);
 		const project = await response.json();
 		return project;
 	}
 
 	async getVersion(projectName: string, version: string): Promise<PurpurVersion> {
-		console.log(`PurpurRemote: Listing version ${version} for project ${projectName}`);
-		const response = await fetch(`${PurpurRemote.PURPUR_API_URL}v2/${projectName}/${version}`);
+		console.log(`PurpurRemote: Requesting version ${version} for project ${projectName}`);
+		const response = await fetchTask(`${PurpurRemote.PURPUR_API_URL}v2/${projectName}/${version}`);
 		const project = await response.json();
 		return project;
 	}
 
 	async getBuild(projectName: string, version: string, build: string): Promise<PuprurBuild> {
-		console.log(`PurpurRemote: Listing build ${build} for version ${version} of project ${projectName}`);
-		const response = await fetch(`${PurpurRemote.PURPUR_API_URL}v2/${projectName}/${version}/${build}`);
+		console.log(`PurpurRemote: Requesting build ${build} for version ${version} of project ${projectName}`);
+		const response = await fetchTask(`${PurpurRemote.PURPUR_API_URL}v2/${projectName}/${version}/${build}`);
 		const project = await response.json();
 		return project;
 	}
@@ -54,48 +56,27 @@ class PurpurRemote implements IJarSource {
 		const versions = project.versions;
 		const jars: IMinecraftJar[] = [];
 
-		for (const versionId of versions) {
+		await asyncForeach(versions, async (versionId) => {
 			const version = await this.getVersion("purpur", versionId);
 			const latestBuildId = version.builds.latest;
-			const latestBuild = await this.getBuild("purpur", versionId, latestBuildId);
-			let bestBuild: string | undefined = latestBuildId;
 
-			if (latestBuild.result !== "SUCCESS") {
-				const allBuildsSorted = version.builds.all.sort((a, b) => {
-					const buildA = parseInt(a);
-					const buildB = parseInt(b);
-					return buildB - buildA;
-				});
-				while (true) {
-					const buildId = allBuildsSorted.pop();
-					if (!buildId) {
-						bestBuild = undefined;
-						break;
-					}
-					const build = await this.getBuild("purpur", versionId, buildId);
-					if (build.result === "SUCCESS") {
-						bestBuild = buildId;
-						break;
-					}
+			await asyncForeach(version.builds.all, async (buildId) => {
+				const build = await this.getBuild("purpur", versionId, buildId);
+				if (build.result !== "SUCCESS") {
+					return;
 				}
-			}
 
-			if (!bestBuild) {
-				continue;
-			}
+				const downloadUrl = `${PurpurRemote.PURPUR_API_URL}v2/purpur/${versionId}/${buildId}/download`;
 
-			const downloadUrl = `${PurpurRemote.PURPUR_API_URL}v2/purpur/${versionId}/${bestBuild}/download`;
-
-			jars.push({
-				identifier: `purpur-${versionId}-${bestBuild}`,
-				localPath: null,
-				remoteUrl: downloadUrl,
-				stable: true,
-				title: `Purpur ${versionId} build ${bestBuild}`,
+				jars.push({
+					identifier: `purpur-${versionId}-${buildId}`,
+					localPath: null,
+					remoteUrl: downloadUrl,
+					stable: latestBuildId === buildId,
+					title: `Purpur ${versionId} build ${buildId}`,
+				});
 			});
-
-
-		}
+		});
 
 		return jars;
 	}

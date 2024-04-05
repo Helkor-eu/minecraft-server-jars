@@ -1,5 +1,7 @@
+import { fetchTask } from "../lib/scheduled-fetch.js";
 import { IJarSource } from "../types/IJarSource.js";
 import { IMinecraftJar } from "../types/IMinecraftJar.js";
+import { asyncForeach } from "../utils/async-foreach.js";
 
 interface FabricMinecraftVersion {
 	version: string;
@@ -30,28 +32,28 @@ class FabricRemote implements IJarSource {
 	static readonly FABRIC_API_URL = "https://meta.fabricmc.net/";
 
 	async listMinecraftVersions(): Promise<FabricMinecraftVersion[]> {
-		console.log("FabricRemote: Listing Minecraft Versions");
-		const response = await fetch(FabricRemote.FABRIC_API_URL + "v2/versions/game");
+		console.log("FabricRemote: Requesting game versions");
+		const response = await fetchTask(FabricRemote.FABRIC_API_URL + "v2/versions/game");
 		const versions = await response.json();
 		return versions;
 	}
 
 	async listLoaderVersions(gameVersion: string): Promise<FabricLoaderOptions[]> {
-		console.log("FabricRemote: Listing Loader Versions for game version " + gameVersion);
-		const response = await fetch(FabricRemote.FABRIC_API_URL + "v2/versions/loader/" + gameVersion);
+		console.log("FabricRemote: Requesting Loader versions for game version " + gameVersion);
+		const response = await fetchTask(FabricRemote.FABRIC_API_URL + "v2/versions/loader/" + gameVersion);
 		const versions = await response.json();
 		return versions;
 	}
 
 	async listInstallers(): Promise<FabricInstallerVersion[]> {
-		console.log("FabricRemote: Getting Installers");
-		const response = await fetch(FabricRemote.FABRIC_API_URL + "v2/versions/installer");
+		console.log("FabricRemote: Requesting installers");
+		const response = await fetchTask(FabricRemote.FABRIC_API_URL + "v2/versions/installer");
 		const installers = await response.json();
 		return installers;
 	}
 
 	public async listRemote(): Promise<IMinecraftJar[]> {
-		console.log("FabricRemote: Listing Remote Versions");
+		console.log("FabricRemote: Fetchong remote Versions");
 		const gameVersions = await this.listMinecraftVersions();
 		const installers = await this.listInstallers();
 		const stableInstaller = installers.find(installer => installer.stable);
@@ -61,19 +63,11 @@ class FabricRemote implements IJarSource {
 
 		console.log(`FabricRemote: Using installer ${stableInstaller.version}`);
 
-
 		const jars: IMinecraftJar[] = [];
-		for (const gameVersion of gameVersions) {
-			if (!gameVersion.stable) {
-				continue;
-			}
-
+		await asyncForeach(gameVersions, async (gameVersion) => {
 			const loaders = await this.listLoaderVersions(gameVersion.version);
-			for (const loader of loaders) {
-				if (!loader.loader.stable) {
-					continue;
-				}
 
+			await asyncForeach(loaders, async (loader) => {
 				jars.push({
 					identifier: "fabric-loader-" + gameVersion.version + "-" + loader.loader.version,
 					remoteUrl: `${FabricRemote.FABRIC_API_URL}v2/versions/loader/${gameVersion.version}/${loader.loader.version}/${stableInstaller.version}/server/jar`,
@@ -81,8 +75,8 @@ class FabricRemote implements IJarSource {
 					stable: loader.loader.stable && gameVersion.stable,
 					title: `Fabric ${gameVersion.version} loader ${loader.loader.version}`,
 				});
-			}
-		}
+			});
+		});
 		return jars;
 	}
 }

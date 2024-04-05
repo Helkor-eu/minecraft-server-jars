@@ -1,5 +1,7 @@
+import { fetchTask } from "../lib/scheduled-fetch.js";
 import { IJarSource } from "../types/IJarSource.js";
 import { IMinecraftJar } from "../types/IMinecraftJar.js";
+import { asyncForeach } from "../utils/async-foreach.js";
 
 enum MojangMinecraftReleaseType {
 	RELEASE = "release",
@@ -50,15 +52,15 @@ class MojangRemote implements IJarSource {
 	static readonly MOJANG_VERSION_ENDPOINT_URL = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
 	async listMinecraftVersions(): Promise<MojangMinecraftVersionManifest> {
-		console.log("MojangRemote: Fetching version manifest");
-		const response = await fetch(MojangRemote.MOJANG_VERSION_ENDPOINT_URL);
+		console.log("MojangRemote: Requesting version manifest");
+		const response = await fetchTask(MojangRemote.MOJANG_VERSION_ENDPOINT_URL);
 		const manifest = await response.json();
 		return manifest;
 	}
 
 	async getVersionDetails(version: MojangMinecraftVersion): Promise<MojangMinecraftPackageDetails> {
-		console.log(`MojangRemote: Fetching version details for ${version.id}`);
-		const response = await fetch(version.url);
+		console.log(`MojangRemote: Requesting version details for ${version.id}`);
+		const response = await fetchTask(version.url);
 		const details = await response.json();
 		return details;
 	}
@@ -67,13 +69,13 @@ class MojangRemote implements IJarSource {
 		const minecraftVersions = await this.listMinecraftVersions();
 		const jars: IMinecraftJar[] = [];
 
-		for (const version of minecraftVersions.versions) {
-			if (version.type !== MojangMinecraftReleaseType.RELEASE) {
-				continue;
-			}
+		await asyncForeach(minecraftVersions.versions, async (version) => {
+			// if (version.type !== MojangMinecraftReleaseType.RELEASE) {
+			// 	continue;
+			// }
 			const details = await this.getVersionDetails(version);
 			if (!details.downloads.server) {
-				continue;
+				return;
 			}
 
 			jars.push({
@@ -83,7 +85,7 @@ class MojangRemote implements IJarSource {
 				title: `Minecraft Server ${version.id}`,
 				stable: version.type === MojangMinecraftReleaseType.RELEASE,
 			});
-		}
+		});
 
 		return jars;
 	}

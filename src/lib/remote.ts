@@ -9,10 +9,13 @@ export async function discoverAllRemoteVersions() {
 	const paperRemote = new PaperRemote();
 	const purpurRemote = new PurpurRemote();
 
-	return [
-		await mojangRemote.listRemote(),
-		await purpurRemote.listRemote(),
-		await paperRemote.listRemote(),
-		await fabricRemote.listRemote(),
-	].flat();
+
+
+	const jars = await Promise.all([
+		mojangRemote.listRemote(),
+		purpurRemote.listRemote(),
+		paperRemote.listRemote(),
+		fabricRemote.listRemote(),
+	])
+	return jars.flat();
 }

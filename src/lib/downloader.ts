@@ -13,14 +13,13 @@ export async function downloadJar(jar: IMinecraftJar, logger: Logger = console.l
 		}
 
 		const destionation = "public/jars/" + jar.identifier + ".jar";
-
-		if (fs.existsSync(destionation) && !fs.existsSync(destionation + ".unfinished")) {
-			logger("Skipping " + jar.identifier + " as it already exists");
-			resolve();
-			return;
-		}
-
 		try {
+			if (fs.existsSync(destionation) && !fs.existsSync(destionation + ".unfinished")) {
+				logger("Skipping " + jar.identifier + " as it already exists");
+				resolve();
+				return;
+			}
+
 			logger("Downloading " + jar.identifier + " to " + destionation);
 
 			fs.writeFileSync(destionation + ".unfinished", "lock");
@@ -57,7 +56,11 @@ export async function downloadJars(queue: IMinecraftJar[]): Promise<void> {
 				const jar = queue.shift();
 				logger("Queue size: " + queue.length);
 				if (jar) {
-					await downloadJar(jar, logger);
+					try {
+						await downloadJar(jar, logger);
+					} catch (error) {
+						logger("Error while downloading");
+					}
 				}
 			}
 			logger("Finished");
