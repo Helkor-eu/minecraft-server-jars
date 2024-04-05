@@ -43,6 +43,9 @@ interface PaperChangelog {
 class PaperRemote implements IJarSource {
 	static readonly PAPER_API_URL = "https://api.papermc.io/";
 
+	constructor(
+		readonly stable_only: boolean = false,
+	) { }
 
 	async getProject(projectName: string): Promise<PaperProject> {
 		console.log(`PaperRemote: Requesting project ${projectName}`);
@@ -75,13 +78,19 @@ class PaperRemote implements IJarSource {
 
 			await asyncForeach(builds, async (buildId) => {
 				const build = await this.getBuild('paper', versionId, buildId);
+				if (this.stable_only && build.channel !== 'default') {
+					return;
+				}
+
 				const url = `https://api.papermc.io/v2/projects/paper/versions/${versionId}/builds/${buildId}/downloads/${build.downloads.application.name}`;
 				const jar: IMinecraftJar = {
 					identifier: 'paper-' + versionId + '-' + buildId,
 					title: 'Paper ' + versionId + ' Build ' + buildId,
 					remoteUrl: url,
 					localPath: null,
-					stable: build.channel === 'default'
+					stable: build.channel === 'default',
+					gameVersion: versionId,
+					software: 'paper',
 				};
 				jars.push(jar);
 			});

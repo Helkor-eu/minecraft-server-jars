@@ -51,6 +51,10 @@ class MojangRemote implements IJarSource {
 
 	static readonly MOJANG_VERSION_ENDPOINT_URL = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
+	constructor(
+		readonly stable_only: boolean = false,
+	) { }
+
 	async listMinecraftVersions(): Promise<MojangMinecraftVersionManifest> {
 		console.log("MojangRemote: Requesting version manifest");
 		const response = await fetchTask(MojangRemote.MOJANG_VERSION_ENDPOINT_URL);
@@ -70,9 +74,9 @@ class MojangRemote implements IJarSource {
 		const jars: IMinecraftJar[] = [];
 
 		await asyncForeach(minecraftVersions.versions, async (version) => {
-			// if (version.type !== MojangMinecraftReleaseType.RELEASE) {
-			// 	continue;
-			// }
+			if (this.stable_only && version.type !== MojangMinecraftReleaseType.RELEASE) {
+				return;
+			}
 			const details = await this.getVersionDetails(version);
 			if (!details.downloads.server) {
 				return;
@@ -84,6 +88,8 @@ class MojangRemote implements IJarSource {
 				remoteUrl: details.downloads.server.url,
 				title: `Minecraft Server ${version.id}`,
 				stable: version.type === MojangMinecraftReleaseType.RELEASE,
+				gameVersion: version.id,
+				software: "minecraft",
 			});
 		});
 

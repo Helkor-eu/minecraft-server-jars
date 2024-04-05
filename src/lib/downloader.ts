@@ -2,6 +2,21 @@ import { IMinecraftJar } from "../types/IMinecraftJar.js";
 import https from "https";
 import fs from "fs";
 
+export function pathFromJar(jar: IMinecraftJar): string {
+	return `public/jars/${jar.software}/${jar.gameVersion}/${jar.identifier}.jar`;
+}
+
+function ensurePathExists(path: string): void {
+	const parts = path.split("/");
+	let current = "";
+	for (const part of parts) {
+		current += part + "/";
+		if (!fs.existsSync(current)) {
+			fs.mkdirSync(current);
+		}
+	}
+}
+
 type Logger = (message: string) => void;
 export async function downloadJar(jar: IMinecraftJar, logger: Logger = console.log): Promise<void> {
 	return new Promise((resolve, reject) => {
@@ -12,7 +27,8 @@ export async function downloadJar(jar: IMinecraftJar, logger: Logger = console.l
 			return;
 		}
 
-		const destionation = "public/jars/" + jar.identifier + ".jar";
+		const destionation = pathFromJar(jar);
+		ensurePathExists(destionation);
 		try {
 			if (fs.existsSync(destionation) && !fs.existsSync(destionation + ".unfinished")) {
 				logger("Skipping " + jar.identifier + " as it already exists");

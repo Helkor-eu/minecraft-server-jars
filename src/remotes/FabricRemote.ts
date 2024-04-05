@@ -31,6 +31,10 @@ class FabricRemote implements IJarSource {
 
 	static readonly FABRIC_API_URL = "https://meta.fabricmc.net/";
 
+	constructor(
+		readonly stable_only: boolean = false,
+	) {}
+
 	async listMinecraftVersions(): Promise<FabricMinecraftVersion[]> {
 		console.log("FabricRemote: Requesting game versions");
 		const response = await fetchTask(FabricRemote.FABRIC_API_URL + "v2/versions/game");
@@ -65,15 +69,25 @@ class FabricRemote implements IJarSource {
 
 		const jars: IMinecraftJar[] = [];
 		await asyncForeach(gameVersions, async (gameVersion) => {
+			if (this.stable_only && !gameVersion.stable) {
+				return;
+			}
+
 			const loaders = await this.listLoaderVersions(gameVersion.version);
 
 			await asyncForeach(loaders, async (loader) => {
+				if (this.stable_only && !loader.loader.stable) {
+					return;
+				}
+
 				jars.push({
 					identifier: "fabric-loader-" + gameVersion.version + "-" + loader.loader.version,
 					remoteUrl: `${FabricRemote.FABRIC_API_URL}v2/versions/loader/${gameVersion.version}/${loader.loader.version}/${stableInstaller.version}/server/jar`,
 					localPath: null,
 					stable: loader.loader.stable && gameVersion.stable,
 					title: `Fabric ${gameVersion.version} loader ${loader.loader.version}`,
+					gameVersion: gameVersion.version,
+					software: "fabric",
 				});
 			});
 		});
