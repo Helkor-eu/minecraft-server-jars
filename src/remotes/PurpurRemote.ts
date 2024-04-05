@@ -27,10 +27,6 @@ interface PuprurBuild {
 	md5: string;
 }
 
-interface IPurpurJar extends IMinecraftJar {
-	purpurBuild: string;
-}
-
 class PurpurRemote implements IJarSource {
 	static readonly PURPUR_API_URL = "https://api.purpurmc.org/";
 
@@ -59,12 +55,6 @@ class PurpurRemote implements IJarSource {
 		return project;
 	}
 
-	sortBuilds(a: string, b: string): number {
-		const aInt = parseInt(a);
-		const bInt = parseInt(b);
-		return bInt - aInt;
-	}
-
 	async listRemote(): Promise<IMinecraftJar[]> {
 		const project = await this.getProject("purpur");
 		const versions = project.versions;
@@ -74,13 +64,11 @@ class PurpurRemote implements IJarSource {
 			const version = await this.getVersion("purpur", versionId);
 			const latestBuildId = version.builds.latest;
 
-			let thisVersionBestJar: IPurpurJar | undefined = undefined;
+			if (this.stable_only) {
+				version.builds.all = [latestBuildId];
+			}
 
-			await asyncForeach(version.builds.all.sort(this.sortBuilds), async (buildId) => {
-				if (this.stable_only && thisVersionBestJar !== undefined && parseInt(thisVersionBestJar.purpurBuild) > parseInt(buildId)) {
-					return;
-				}
-
+			await asyncForeach(version.builds.all, async (buildId) => {
 				const build = await this.getBuild("purpur", versionId, buildId);
 				if (build.result !== "SUCCESS") {
 					return;
@@ -88,28 +76,16 @@ class PurpurRemote implements IJarSource {
 
 				const downloadUrl = `${PurpurRemote.PURPUR_API_URL}v2/purpur/${versionId}/${buildId}/download`;
 
-				const jar = {
+				jars.push({
 					identifier: `purpur-${versionId}-${buildId}`,
 					localPath: null,
 					remoteUrl: downloadUrl,
-					stable: latestBuildId === buildId || this.stable_only,
+					stable: latestBuildId === buildId,
 					title: `Purpur ${versionId} build ${buildId}`,
 					gameVersion: versionId,
 					software: "purpur",
-					purpurBuild: buildId,
-				};
-
-				if (this.stable_only && (thisVersionBestJar === undefined || parseInt(thisVersionBestJar.purpurBuild) < parseInt(buildId))) {
-					thisVersionBestJar = jar;
-				}
-				else if (!this.stable_only) {
-					jars.push(jar);
-				}
+				});
 			});
-
-			if (thisVersionBestJar !== undefined && this.stable_only) {
-				jars.push(thisVersionBestJar);
-			}
 		});
 
 		return jars;
