@@ -3,32 +3,28 @@ import https from "https";
 import fs from "fs";
 
 export function pathFromJar(jar: IMinecraftJar): string {
-	return `public/jars/${jar.software}/${jar.gameVersion}/${jar.identifier}.jar`;
+	//return `public/jars/${jar.software}/${jar.gameVersion}/${jar.identifier}.jar`;
+	return `public/jars/${jar.identifier}.jar`;
 }
 
-function ensurePathExists(path: string): void {
-	const parts = path.split("/");
-	let current = "";
-	for (const part of parts) {
-		current += part + "/";
-		if (!fs.existsSync(current)) {
-			fs.mkdirSync(current);
-		}
-	}
-}
 
 type Logger = (message: string) => void;
 export async function downloadJar(jar: IMinecraftJar, logger: Logger = console.log): Promise<void> {
+	const downloadPolicy = process.env.DOWNLOAD ?? 'STABLE';
+	if (!['ALL', 'STABLE'].includes(downloadPolicy)) {
+		console.log("Download is disabled by env");
+		return;
+	}
+
 	return new Promise((resolve, reject) => {
 
-		if (!jar.stable) {
+		if (!jar.stable && downloadPolicy === 'STABLE') {
 			logger("Skipping " + jar.identifier + " as it is not stable");
 			resolve();
 			return;
 		}
 
 		const destionation = pathFromJar(jar);
-		ensurePathExists(destionation);
 		try {
 			if (fs.existsSync(destionation) && !fs.existsSync(destionation + ".unfinished")) {
 				logger("Skipping " + jar.identifier + " as it already exists");
@@ -57,7 +53,13 @@ export async function downloadJar(jar: IMinecraftJar, logger: Logger = console.l
 }
 
 export async function downloadJars(queue: IMinecraftJar[]): Promise<void> {
-	const workerCount = 5;
+	const downloadPolicy = process.env.DOWNLOAD ?? 'STABLE';
+	if (!['ALL', 'STABLE'].includes(downloadPolicy)) {
+		console.log("Download is disabled by env");
+		return;
+	}
+
+	const workerCount = parseInt(process.env.DOWNLOAD_WORKERS ?? '5');
 	const workers = [];
 
 	console.log("Downloading " + queue.length + " jars with " + workerCount + " workers");

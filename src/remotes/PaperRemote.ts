@@ -75,12 +75,14 @@ class PaperRemote implements IJarSource {
 		await asyncForeach(versions.versions, async (versionId) => {
 			const version = await this.getVersion('paper', versionId);
 			const builds = version.builds;
+			const latestBuildId = builds.reduce((a, b) => Math.max(a, b), 0);
+
 
 			await asyncForeach(builds, async (buildId) => {
-				const build = await this.getBuild('paper', versionId, buildId);
-				if (this.stable_only && build.channel !== 'default') {
+				if (this.stable_only && latestBuildId !== buildId) {
 					return;
 				}
+				const build = await this.getBuild('paper', versionId, buildId);
 
 				const url = `https://api.papermc.io/v2/projects/paper/versions/${versionId}/builds/${buildId}/downloads/${build.downloads.application.name}`;
 				const jar: IMinecraftJar = {

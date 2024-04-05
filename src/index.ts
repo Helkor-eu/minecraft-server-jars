@@ -4,4 +4,4 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 console.log('running...');
-discoverAllRemoteVersions().then(console.log);
+discoverAllRemoteVersions().then(downloadJars);
