@@ -2,6 +2,7 @@ import FabricRemote from "../remotes/FabricRemote.js";
 import MojangRemote from "../remotes/MojangRemote.js";
 import PaperRemote from "../remotes/PaperRemote.js";
 import PurpurRemote from "../remotes/PurpurRemote.js";
+import SpigotRemote from "../remotes/SpigotRemote.js";
 import { IMinecraftJar } from "../types/IMinecraftJar.js";
 
 
@@ -15,6 +16,8 @@ function constructRemoteByName(name: string, stable_only: boolean = false) {
 			return new PaperRemote(stable_only);
 		case 'PURPUR':
 			return new PurpurRemote(stable_only);
+		case 'SPIGOT':
+			return new SpigotRemote(stable_only);
 		default:
 			throw new Error(`Unknown remote ${name}`);
 	}

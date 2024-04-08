@@ -23,6 +23,10 @@ export function deleteJarFile(file: string): void {
 	fs.unlinkSync("public/jars/" + file);
 }
 
+export function isJarDownloaded(jar: IMinecraftJar): boolean {
+	return fs.existsSync(pathFromJar(jar)) && !fs.existsSync(pathFromJar(jar) + ".unfinished");
+}
+
 export function shouldBeDownloaded(jar: IMinecraftJar): boolean {
 	if (!isDownloadsEnabled()) {
 		return false;

@@ -1,3 +1,4 @@
+import { runApi } from "./api/api.js";
 import {  downloadJars } from "./lib/downloader.js";
 import { getAllJars, indexJars } from "./lib/indexer.js";
 import { pruneDownloads, pruneIndex } from "./lib/prune.js";
@@ -31,3 +32,5 @@ if ((process.env.UPDATE_ON_START ?? 'true') === 'true') {
 } else {
 	console.log('Skipping full update on start (set UPDATE_ON_START=true to enable)');
 }
+
+runApi();

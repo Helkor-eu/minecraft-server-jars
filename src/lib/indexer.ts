@@ -77,12 +77,15 @@ async function getJarsBySoftware(software: string): Promise<IMinecraftJar[]> {
   });
 }
 
-async function getSoftwareList(): Promise<string[]> {
+async function getSoftwareList(version: string | undefined = undefined): Promise<string[]> {
   const software = await prisma.jar.findMany({
     distinct: ['software'],
     select: {
       software: true,
     },
+    where: {
+      gameVersion: version,
+    }
   });
 
   return software.map((s) => s.software);
@@ -100,6 +103,18 @@ async function getJarsBySoftwareAndGameVersion(
   });
 }
 
+async function getGameVersions(software: string | undefined = undefined) {
+  const versions = await prisma.jar.findMany({
+    distinct: ['gameVersion'],
+    where: {
+      software,
+    },
+    select: {
+      gameVersion: true,
+    },
+  });
+  return versions.map((v) => v.gameVersion);
+}
 
 async function deleteFromIndex(identifiers: string[]) {
   const { count } = await prisma.jar.deleteMany({
@@ -136,4 +151,5 @@ export {
   getJarsBySoftwareAndGameVersion,
   deleteFromIndex,
   deleteFromIndexExcept,
+  getGameVersions,
 };
