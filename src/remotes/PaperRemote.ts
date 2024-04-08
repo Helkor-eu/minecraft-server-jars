@@ -1,3 +1,4 @@
+import { Sign } from "crypto";
 import { fetchTask } from "../lib/scheduled-fetch.js";
 import { IJarSource } from "../types/IJarSource.js";
 import { IMinecraftJar } from "../types/IMinecraftJar.js";
@@ -68,12 +69,16 @@ class PaperRemote implements IJarSource {
 		return project;
 	}
 
+	firstToUpper(str: string): string {
+		return str.charAt(0).toUpperCase() + str.slice(1);
+	}
 
-	async listRemote(): Promise<IMinecraftJar[]> {
+
+	async listRemoteProject(projectName: string): Promise<IMinecraftJar[]> {
 		const jars: IMinecraftJar[] = [];
-		const versions = await this.getProject('paper');
+		const versions = await this.getProject(projectName);
 		await asyncForeach(versions.versions, async (versionId) => {
-			const version = await this.getVersion('paper', versionId);
+			const version = await this.getVersion(projectName, versionId);
 			const builds = version.builds;
 			const latestBuildId = builds.reduce((a, b) => Math.max(a, b), 0);
 
@@ -82,23 +87,27 @@ class PaperRemote implements IJarSource {
 				if (this.stable_only && latestBuildId !== buildId) {
 					return;
 				}
-				const build = await this.getBuild('paper', versionId, buildId);
+				const build = await this.getBuild(projectName, versionId, buildId);
 
-				const url = `https://api.papermc.io/v2/projects/paper/versions/${versionId}/builds/${buildId}/downloads/${build.downloads.application.name}`;
+				const url = `https://api.papermc.io/v2/projects/${projectName}/versions/${versionId}/builds/${buildId}/downloads/${build.downloads.application.name}`;
 				const jar: IMinecraftJar = {
-					identifier: 'paper-' + versionId + '-' + buildId,
-					title: 'Paper ' + versionId + ' Build ' + buildId,
+					identifier: projectName + '-' + versionId + '-' + buildId,
+					title: this.firstToUpper(projectName) + versionId + ' Build ' + buildId,
 					remoteUrl: url,
 					localPath: null,
 					stable: build.channel === 'default',
 					gameVersion: versionId,
-					software: 'paper',
+					software: projectName,
 				};
 				jars.push(jar);
 			});
 		});
 
 		return jars;
+	}
+
+	async listRemote(): Promise<IMinecraftJar[]> {
+		return this.listRemoteProject('paper');
 	}
 }
 

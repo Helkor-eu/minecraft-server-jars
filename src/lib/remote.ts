@@ -2,34 +2,33 @@ import FabricRemote from "../remotes/FabricRemote.js";
 import MojangRemote from "../remotes/MojangRemote.js";
 import PaperRemote from "../remotes/PaperRemote.js";
 import PurpurRemote from "../remotes/PurpurRemote.js";
-import { IMinecraftJar } from "../types/IMinecraftJar.js";
+import VelocityRemote from "../remotes/VelocityRemote.js";
+import { IJarSource } from "../types/IJarSource.js";
 
 
-function constructRemoteByName(name: string, stable_only: boolean = false) {
-	switch (name.toUpperCase()) {
-		case 'MOJANG':
-			return new MojangRemote(stable_only);
-		case 'FABRIC':
-			return new FabricRemote(stable_only);
-		case 'PAPER':
-			return new PaperRemote(stable_only);
-		case 'PURPUR':
-			return new PurpurRemote(stable_only);
-		default:
-			throw new Error(`Unknown remote ${name}`);
+function constructRemotes(stable_only: boolean = false) {
+	return {
+		'MOJANG': new MojangRemote(stable_only),
+		'FABRIC': new FabricRemote(stable_only),
+		'PAPER': new PaperRemote(stable_only),
+		'PURPUR': new PurpurRemote(stable_only),
+		'VELOCITY': new VelocityRemote(stable_only),
 	}
+}
+
+function constructRemoteByName(name: string, stable_only: boolean = false): IJarSource {
+	const remotes = constructRemotes(stable_only);
+	// @ts-ignore
+	return remotes[name.toUpperCase()];
 }
 
 export async function discoverAllRemoteVersions() {
 	const indexString = process.env.INDEX ?? 'ALL_STABLE';
 	if (indexString === 'ALL' || indexString === 'ALL_STABLE') {
 		const onlyStable = indexString === 'ALL_STABLE';
-		const remotes = [
-			new MojangRemote(onlyStable),
-			new FabricRemote(onlyStable),
-			new PaperRemote(onlyStable),
-			new PurpurRemote(onlyStable),
-		];
+
+		const remoteObj = constructRemotes(onlyStable);
+		const remotes = Object.entries(remoteObj).map(([_, remote]) => remote);
 		const jars = await Promise.all(remotes.map(remote => remote.listRemote()));
 		return jars.flat();
 	}
