@@ -21,8 +21,10 @@ async function downloadJarsFromIndex() {
 }
 
 async function fullUpdate() {
+	console.log('Running full update');
 	await indexRemoteJars();
 	await downloadJarsFromIndex();
+	console.log('Full update complete');
 }
 
 setInterval(fullUpdate, parseInt(process.env.UPDATE_INTERVAL ?? '24')*60*60*1000);

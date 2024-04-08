@@ -3,7 +3,9 @@ import { getGameVersions, getJarById, getJarsByGameVersion, getJarsBySoftware, g
 import { IMinecraftJar } from '../types/IMinecraftJar.js';
 import { isJarDownloaded } from '../lib/downloader.js';
 
-const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
+function getBaseUrl() {
+	return process.env.BASE_URL ?? 'http://localhost:3000';
+}
 
 interface ApiJar extends IMinecraftJar {
 	bestDownload: string;
@@ -12,7 +14,7 @@ interface ApiJar extends IMinecraftJar {
 
 function transformJar(jar: IMinecraftJar): ApiJar {
 	const isDownloaded = isJarDownloaded(jar);
-	const localUrl = `${BASE_URL}/static/jars/${jar.identifier}.jar`;
+	const localUrl = `${getBaseUrl()}/static/jars/${jar.identifier}.jar`;
 	return {
 		...jar,
 		localPath: isDownloaded ? localUrl : null,
@@ -40,7 +42,7 @@ export function api_v1() {
 		res.json({
 			software: software.map((s) => ({
 				software: s,
-				url: `${BASE_URL}/api/v1/software/${s}`,
+				url: `${getBaseUrl()}/api/v1/software/${s}`,
 			})),
 		});
 	});
@@ -50,10 +52,10 @@ export function api_v1() {
 		const gameVersions = await getGameVersions(software);
 		res.json({
 			software,
-			jars: `${BASE_URL}/api/v1/software/${software}/jars`,
+			jars: `${getBaseUrl()}/api/v1/software/${software}/jars`,
 			groups: gameVersions.map((v) => ({
 				group: v,
-				url: `${BASE_URL}/api/v1/software/${software}/group/${v}/jars`,
+				url: `${getBaseUrl()}/api/v1/software/${software}/group/${v}/jars`,
 			})),
 		});
 	});
@@ -72,7 +74,7 @@ export function api_v1() {
 		const group = req.params.group;
 		res.json({
 			software,
-			jars: `${BASE_URL}/api/v1/software/${software}/group/${group}/jars`,
+			jars: `${getBaseUrl()}/api/v1/software/${software}/group/${group}/jars`,
 		})
 	});
 
@@ -92,8 +94,8 @@ export function api_v1() {
 		res.json({
 			versions: versions.map((v) => ({
 				version: v,
-				url: `${BASE_URL}/api/v1/versions/${v}`,
-				jars: `${BASE_URL}/api/v1/versions/${v}/jars`,
+				url: `${getBaseUrl()}/api/v1/versions/${v}`,
+				jars: `${getBaseUrl()}/api/v1/versions/${v}/jars`,
 			})),
 		});
 	});
@@ -104,11 +106,11 @@ export function api_v1() {
 
 		res.json({
 			version,
-			jars: `${BASE_URL}/api/v1/versions/${version}/jars`,
+			jars: `${getBaseUrl()}/api/v1/versions/${version}/jars`,
 			software: software.map((s) => ({
 				software: s,
-				url: `${BASE_URL}/api/v1/software/${s}/group/${version}`,
-				jars: `${BASE_URL}/api/v1/software/${s}/group/${version}/jars`,
+				url: `${getBaseUrl()}/api/v1/software/${s}/group/${version}`,
+				jars: `${getBaseUrl()}/api/v1/software/${s}/group/${version}/jars`,
 			})),
 		});
 	});
