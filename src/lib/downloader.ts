@@ -7,22 +7,49 @@ export function pathFromJar(jar: IMinecraftJar): string {
 	return `public/jars/${jar.identifier}.jar`;
 }
 
+export function getAllJarFiles(): string[] {
+	return fs.readdirSync("public/jars").filter((file) => file.endsWith(".jar"));
+}
+
+function getDownloadPolicy(): string {
+	return process.env.DOWNLOAD ?? 'STABLE';
+}
+
+function isDownloadsEnabled(): boolean {
+	return ['ALL', 'STABLE'].includes(getDownloadPolicy());
+}
+
+export function deleteJarFile(file: string): void {
+	fs.unlinkSync("public/jars/" + file);
+}
+
+export function shouldBeDownloaded(jar: IMinecraftJar): boolean {
+	if (!isDownloadsEnabled()) {
+		return false;
+	}
+
+	const downloadPolicy = getDownloadPolicy();
+	if (!jar.stable && downloadPolicy === 'STABLE') {
+		return false;
+	}
+	return true;
+}
 
 type Logger = (message: string) => void;
 export async function downloadJar(jar: IMinecraftJar, logger: Logger = console.log): Promise<void> {
-	const downloadPolicy = process.env.DOWNLOAD ?? 'STABLE';
-	if (!['ALL', 'STABLE'].includes(downloadPolicy)) {
-		console.log("Download is disabled by env");
+
+	if (!isDownloadsEnabled()) {
+		logger("Download is disabled by env");
 		return;
 	}
 
 	return new Promise((resolve, reject) => {
-
-		if (!jar.stable && downloadPolicy === 'STABLE') {
-			logger("Skipping " + jar.identifier + " as it is not stable");
+		if (!shouldBeDownloaded(jar)) {
+			logger("Skipping " + jar.identifier + " as it is not marked for download");
 			resolve();
 			return;
 		}
+
 
 		const destionation = pathFromJar(jar);
 		try {
