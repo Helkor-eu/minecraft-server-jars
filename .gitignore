@@ -2,3 +2,5 @@ node_modules
 public/**/*.jar
 public/**/*.unfinished
 .env
+dev.db
+dev.db-journal
