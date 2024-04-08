@@ -1,7 +1,4 @@
-import { fetchTask } from "../lib/scheduled-fetch.js";
-import { IJarSource } from "../types/IJarSource.js";
 import { IMinecraftJar } from "../types/IMinecraftJar.js";
-import { asyncForeach } from "../utils/async-foreach.js";
 import PaperRemote from "./PaperRemote.js";
 
 class VelocityRemote extends PaperRemote {
