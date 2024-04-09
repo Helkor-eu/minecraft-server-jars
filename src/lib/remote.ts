@@ -2,6 +2,7 @@ import FabricRemote from "../remotes/FabricRemote.js";
 import MojangRemote from "../remotes/MojangRemote.js";
 import PaperRemote from "../remotes/PaperRemote.js";
 import PurpurRemote from "../remotes/PurpurRemote.js";
+import { SpigotRemote } from "../remotes/SpigotRemote.js";
 import VelocityRemote from "../remotes/VelocityRemote.js";
 import { IJarSource } from "../types/IJarSource.js";
 
@@ -13,6 +14,7 @@ function constructRemotes(stable_only: boolean = false) {
 		'PAPER': new PaperRemote(stable_only),
 		'PURPUR': new PurpurRemote(stable_only),
 		'VELOCITY': new VelocityRemote(stable_only),
+		'SPIGOT': new SpigotRemote(stable_only),
 	}
 }
 
