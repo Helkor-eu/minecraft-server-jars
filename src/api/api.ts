@@ -1,5 +1,6 @@
 import express from 'express';
 import { api_v1 } from './api_v1.js';
+import { absolutePath } from '../../root-directory.js';
 
 function runApi() {
 	const app = express();
@@ -11,7 +12,7 @@ function runApi() {
 	app.use('/api/v1', api_v1());
 
 	app.get('/', (req, res) => {
-		res.redirect('static/index.html');
+		res.sendFile(absolutePath('public/index.html'));
 	});
 
 	app.listen(port, () => {
