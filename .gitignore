@@ -4,4 +4,4 @@ public/**/*.unfinished
 .env
 dev.db
 dev.db-journal
-package-lock.json
+
