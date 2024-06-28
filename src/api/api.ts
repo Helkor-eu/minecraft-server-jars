@@ -1,6 +1,6 @@
 import express from 'express';
 import { api_v1 } from './api_v1.js';
-import { absolutePath } from '../../root-directory.js';
+import { generateHomepage, getHomepage } from '../frontend/ssg.js';
 
 function runApi() {
 	const app = express();
@@ -11,8 +11,10 @@ function runApi() {
 
 	app.use('/api/v1', api_v1());
 
-	app.get('/', (req, res) => {
-		res.sendFile(absolutePath('public/index.html'));
+	app.get('/', async (req, res) => {
+		const homepage = await generateHomepage();
+		res.send(homepage);
+		//res.sendFile(absolutePath('public/index.html'));
 	});
 
 	app.listen(port, () => {

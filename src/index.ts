@@ -1,4 +1,5 @@
 import { runApi } from "./api/api.js";
+import { generateHomepage } from "./frontend/ssg.js";
 import {  downloadJars } from "./lib/downloader.js";
 import { getAllJars, indexJars } from "./lib/indexer.js";
 import { pruneDownloads, pruneIndex } from "./lib/prune.js";
@@ -12,6 +13,7 @@ async function indexRemoteJars() {
 	const remoteJars = await discoverAllRemoteVersions();
 	await indexJars(remoteJars);
 	await pruneIndex(remoteJars);
+	await generateHomepage();
 }
 
 async function downloadJarsFromIndex() {

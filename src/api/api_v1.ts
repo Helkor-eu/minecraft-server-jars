@@ -12,7 +12,7 @@ interface ApiJar extends IMinecraftJar {
 	downloaded: boolean;
 }
 
-async function transformJar(jar: IMinecraftJar): Promise<ApiJar> {
+export async function transformJar(jar: IMinecraftJar): Promise<ApiJar> {
 	const isDownloaded = isJarDownloaded(jar);
 	const localUrl = `${getBaseUrl()}/static/jars/${jar.identifier}.jar`;
 	const javaVersion = await getJarJavaVersion(jar);

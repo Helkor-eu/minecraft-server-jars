@@ -1,6 +1,7 @@
 node_modules
 public/**/*.jar
 public/**/*.unfinished
+public/index.ssg.html
 .env
 dev.db
 dev.db-journal
