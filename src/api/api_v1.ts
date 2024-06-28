@@ -1,5 +1,5 @@
 import express from 'express';
-import { getGameVersions, getJarById, getJarsByGameVersion, getJarsBySoftware, getJarsBySoftwareAndGameVersion, getSoftwareList } from '../lib/indexer.js';
+import { getGameVersions, getJarById, getJarJavaVersion, getJarsByGameVersion, getJarsBySoftware, getJarsBySoftwareAndGameVersion, getSoftwareList } from '../lib/indexer.js';
 import { IMinecraftJar } from '../types/IMinecraftJar.js';
 import { isJarDownloaded } from '../lib/downloader.js';
 
@@ -12,11 +12,13 @@ interface ApiJar extends IMinecraftJar {
 	downloaded: boolean;
 }
 
-function transformJar(jar: IMinecraftJar): ApiJar {
+async function transformJar(jar: IMinecraftJar): Promise<ApiJar> {
 	const isDownloaded = isJarDownloaded(jar);
 	const localUrl = `${getBaseUrl()}/static/jars/${jar.identifier}.jar`;
+	const javaVersion = await getJarJavaVersion(jar);
 	return {
 		...jar,
+		javaVersion,
 		localPath: isDownloaded ? localUrl : null,
 		bestDownload: isDownloaded ? localUrl : jar.remoteUrl,
 		downloaded: isDownloaded,
@@ -65,7 +67,7 @@ export function api_v1() {
 		const jars = await getJarsBySoftware(software);
 		res.json({
 			software,
-			jars: jars.map(transformJar),
+			jars: await Promise.all(jars.map(transformJar)),
 		});
 	});
 
@@ -85,7 +87,7 @@ export function api_v1() {
 		res.json({
 			software,
 			group,
-			jars: jars.map(transformJar),
+			jars: await Promise.all(jars.map(transformJar)),
 		});
 	});
 
@@ -120,7 +122,7 @@ export function api_v1() {
 		const jars = await getJarsByGameVersion(version);
 		res.json({
 			version,
-			jars: jars.map(transformJar),
+			jars: await Promise.all(jars.map(transformJar)),
 		});
 	});
 
@@ -131,7 +133,7 @@ export function api_v1() {
 			res.status(404).json({ error: 'Jar not found' });
 			return;
 		}
-		res.json(transformJar(jar));
+		res.json(await transformJar(jar));
 	});
 
 	return app;

@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Simple minecraft server jars archive",
   "scripts": {
-    "start": "node --loader ts-node/esm src/index.ts"
+    "start": "npx tsx src/index.ts",
+    "dev": "npx tsx watch src/index.ts"
   },
   "license": "ISC",
   "dependencies": {
@@ -16,7 +17,7 @@
     "express": "^4.19.2",
     "node-html-parser": "^6.1.13",
     "prisma": "^5.12.1",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.15.8",
     "typescript": "^5.4.3"
   }
 }

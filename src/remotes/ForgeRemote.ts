@@ -37,7 +37,7 @@ export default class ForgeRemote implements IJarSource {
                 gameVersion,
                 remoteUrl: `https://maven.minecraftforge.net/net/minecraftforge/forge/${gameVersion}-${forgeVersion}/forge-${gameVersion}-${forgeVersion}-installer.jar`,
                 stable: channel === "recommended",
-            }); 
+            });
         });
         return jars;
     }

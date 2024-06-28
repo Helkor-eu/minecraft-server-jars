@@ -30,6 +30,10 @@ interface MojangMinecraftPackageDetails {
 	downloads: Record<MojangMinecraftSoftwareType, MojangMinecraftPackageDownload>;
 	releaseTime: string;
 	time: string;
+	javaVersion: {
+		component: string;
+		majorVersion: number;
+	}
 }
 
 
@@ -89,6 +93,7 @@ class MojangRemote implements IJarSource {
 				title: `Minecraft Server ${version.id}`,
 				stable: version.type === MojangMinecraftReleaseType.RELEASE,
 				gameVersion: version.id,
+				javaVersion: details.javaVersion?.majorVersion?.toString(),
 				software: "minecraft",
 			});
 		});

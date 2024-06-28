@@ -8,4 +8,5 @@ export interface IMinecraftJar {
 	localPath: string | null;
 
 	stable: boolean;
+	javaVersion?: string | null;
 }

@@ -18,7 +18,10 @@ model Jar {
   title       String
   software    String
   gameVersion String
+  javaVersion String?
   remoteUrl   String
   localPath   String?
   stable      Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
